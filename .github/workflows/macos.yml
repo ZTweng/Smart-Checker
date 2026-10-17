@@ -20,7 +20,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        runner: [macos-15, macos-15-intel]
+        # macos-13 is the GitHub-hosted Intel runner. There is no
+        # macos-15-intel label on the standard hosted runner pool.
+        runner: [macos-15, macos-13]
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 40
     steps:
