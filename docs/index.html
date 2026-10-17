@@ -13,6 +13,7 @@
     main{max-width:1100px;margin:auto;padding:36px 24px 50px}header{display:flex;align-items:center;gap:12px;font-weight:700;letter-spacing:-.3px}header img{width:42px;height:42px;border-radius:12px}header span{margin-left:auto;color:var(--muted);font-size:13px;font-weight:400}
     .hero{padding:70px 0 38px}.eyebrow{font-size:12px;letter-spacing:2px;color:var(--accent);font-weight:700}h1{font-size:clamp(34px,5.5vw,58px);line-height:1.18;letter-spacing:-2px;margin:17px 0 22px}p{color:var(--muted);margin:0}.intro{max-width:650px}.features{display:flex;gap:20px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:24px}
     .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.card,.help{border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:24px;box-shadow:var(--shadow)}.card{padding:27px;display:flex;flex-direction:column}.symbol{width:48px;height:48px;border-radius:15px;background:var(--soft);color:var(--accent);display:grid;place-items:center;font-size:22px;font-weight:700}
+    .symbol svg{display:block;width:26px;height:26px;fill:currentColor}
     h2{font-size:23px;margin:20px 0 2px;letter-spacing:-.6px}.format{font-size:13px;color:var(--muted)}.desc{font-size:14px;margin:18px 0 24px;flex:1}.download{background:var(--accent);color:var(--bg);display:block;text-align:center;text-decoration:none;padding:12px 8px;border-radius:13px;font-weight:650}.download:hover{filter:brightness(1.1)}a:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:5px}.note{font-size:12px;margin-top:13px;line-height:1.6}.status{display:inline-block;font-size:12px;color:var(--accent);background:var(--soft);border-radius:99px;padding:3px 10px;margin-top:12px}
     .help{margin-top:22px;padding:24px 28px}.help h2{font-size:17px;margin:0 0 12px}details{border-top:1px solid var(--line);padding:13px 0}details:last-child{padding-bottom:0}summary{cursor:pointer;font-size:14px;font-weight:600}details p{font-size:14px;padding-top:10px}footer{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;color:var(--muted);font-size:12px;margin-top:26px}footer a,.help a{color:var(--accent)}.version{font-size:13px;color:var(--muted);margin-top:16px}
     @media(max-width:760px){.grid{grid-template-columns:1fr}.hero{padding-top:45px}.card{padding:24px}h1{letter-spacing:-1px}header span{display:none}}
@@ -31,19 +32,19 @@
   </section>
   <section class="grid" aria-label="选择设备下载安装包">
     <article class="card">
-      <div class="symbol" aria-hidden="true">▦</div><h2>Windows</h2><div class="format">64 位 · EXE 安装程序</div>
+      <div class="symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M2 3h9v8H2zm11 0h9v8h-9zM2 13h9v8H2zm11 0h9v8h-9z"/></svg></div><h2>Windows</h2><div class="format">64 位 · EXE 安装程序</div>
       <p class="desc">下载后运行安装程序，按提示选择安装位置。包含软件所需运行环境及卸载入口。</p>
       <a class="download" href="https://github.com/ZTweng/Smart-Checker/releases/download/6.26.2/Smart.Checker-6.26.2-Setup.exe">下载 Windows 版</a>
       <p class="note">卸载：Windows 设置 → 应用 → Smart Checker。</p>
     </article>
     <article class="card">
-      <div class="symbol" aria-hidden="true">↗</div><h2>Android</h2><div class="format">Android 8.0 及以上 · APK</div>
+      <div class="symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6.4 3.7-1-1.6.9-.5 1.1 1.7a9.2 9.2 0 0 1 9.2 0l1.1-1.7.9.5-1 1.6A7 7 0 0 1 21 9H3a7 7 0 0 1 3.4-5.3ZM7.5 5.5a.8.8 0 1 0 0 1.6.8.8 0 0 0 0-1.6Zm9 0a.8.8 0 1 0 0 1.6.8.8 0 0 0 0-1.6ZM3 10h18v8a1 1 0 0 1-1 1h-2v2a1.5 1.5 0 0 1-3 0v-2H9v2a1.5 1.5 0 0 1-3 0v-2H4a1 1 0 0 1-1-1Zm-2 0a1 1 0 0 1 1 1v6a1 1 0 0 1-2 0v-6a1 1 0 0 1 1-1Zm22 0a1 1 0 0 1 1 1v6a1 1 0 0 1-2 0v-6a1 1 0 0 1 1-1Z"/></svg></div><h2>Android</h2><div class="format">Android 8.0 及以上 · APK</div>
       <p class="desc">在 Android 设备下载 APK 并安装。支持添加多个 XLSX 表格，查看检查结果与导出批注。</p>
       <a class="download" href="https://github.com/ZTweng/Smart-Checker/releases/download/6.26.2/Smart.Checker-6.26.2.apk">下载 Android 版</a>
       <p class="note">若系统询问安装来源权限，请核对下载来源后决定是否允许。不适用于 iPhone。</p>
     </article>
     <article class="card">
-      <div class="symbol" aria-hidden="true">⌘</div><h2>macOS</h2><div class="format">仅 Apple 芯片（M 系列）· DMG</div>
+      <div class="symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M16.4 1.4c.1 1.3-.4 2.6-1.2 3.5-.8.9-2 1.5-3.1 1.4-.2-1.3.4-2.6 1.1-3.4.8-.9 2.1-1.5 3.2-1.5Zm4.1 16.1c-.5 1.2-.8 1.7-1.5 2.8-.9 1.3-2.1 2.9-3.6 2.9-1.3 0-1.7-.9-3.5-.9s-2.2.9-3.5.9c-1.5.1-2.7-1.5-3.6-2.8C2.3 16.7 1.5 11.6 3.2 9c1.2-1.8 3.1-2.8 5-2.8 1.5 0 2.5.9 3.7.9 1.1 0 2.9-1.1 4.8-.9 1.6.1 2.8.8 3.6 1.9-3.2 1.8-2.7 6.4.2 7.7.2.1.3.2.5.2l-.5 1.5Z"/></svg></div><h2>macOS</h2><div class="format">仅 Apple 芯片（M 系列）· DMG</div>
       <p class="desc">打开 DMG，将 Smart Checker 拖入 Applications。此安装包不适用于 Intel 处理器 Mac。</p>
       <a class="download" href="https://github.com/ZTweng/Smart-Checker/releases/download/6.26.2/Smart.Checker-6.26.2-arm64.dmg">下载 Mac 测试版</a>
       <p class="note">尚未完成 Developer ID 签名、Apple 公证和实机交互检查。系统可能阻止首次启动；请勿关闭系统安全保护。</p>
