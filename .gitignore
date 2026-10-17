@@ -1,0 +1,7 @@
+.gradle/
+.kotlin/
+**/build/
+build-tools/
+releases/
+.signing/
+local.properties

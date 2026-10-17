@@ -1,0 +1,47 @@
+name: macOS build and screenshots
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/macos.yml'
+      - '**/*.kts'
+      - '**/src/**'
+      - 'gradle/**'
+      - 'packaging/**'
+      - 'script/**'
+permissions:
+  contents: read
+concurrency:
+  group: macos-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, macos-15-intel]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build and validate DMG
+        run: bash packaging/build-macos.sh
+      - name: Launch app and capture themes
+        run: bash script/mac-screenshots.sh
+      - name: Upload DMG and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Smart-Checker-${{ matrix.runner }}
+          path: |
+            releases/macos/
+            shared/build/reports/tests/
+            desktopApp/build/compose/logs/
+          retention-days: 14
+          if-no-files-found: warn
