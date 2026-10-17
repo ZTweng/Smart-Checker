@@ -1,0 +1,44 @@
+name: Publish existing Apple silicon DMG
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/publish-existing-mac.yml']
+permissions:
+  actions: read
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: Smart-Checker-macos-15
+          run-id: 39014345784
+          github-token: ${{ github.token }}
+          path: artifact
+      - name: Upload verified artifact to existing release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find artifact -type f -name 'Smart Checker-6.26.2-arm64.dmg')
+          test "${#files[@]}" -eq 1
+          file="${files[0]}"
+          test -s "$file"
+          sha256sum "$file" > "$file.sha256"
+          cat > macOS-README.txt <<'EOF'
+          Smart Checker 6.26.2 for macOS — Apple silicon (M-series) only.
+          Built by GitHub Actions on macos-15; not an Intel or universal binary.
+          Open the DMG and drag Smart Checker.app to Applications.
+          Uninstall by removing the app from Applications.
+          Developer ID signing and Apple notarization are not configured.
+          Interactive testing on a physical Mac is still pending.
+          Do not disable Gatekeeper globally. Ask the publisher if startup is blocked.
+          EOF
+          # Do not replace existing assets or modify Windows/Android release metadata.
+          gh release view 6.26.2
+          gh release upload 6.26.2 "$file" "$file.sha256" macOS-README.txt
