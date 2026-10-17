@@ -1,2 +1,2 @@
 # Smart-Checker
-A program provided for follow-up checks of SAMC activities at Guangzhou University
+A program tool for following up and checking SAMC activities at Guangzhou University
