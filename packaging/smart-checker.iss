@@ -1,11 +1,14 @@
 #define AppName "Smart Checker"
-#define AppVersion "6.26.2"
+#define AppVersion "6.26.3"
 
 [Setup]
 AppId={{FE019F7E-FAF8-4BB6-96A7-40F9939CCF37}
 AppName={#AppName}
 AppVersion={#AppVersion}
-AppPublisher=SAMC
+AppPublisher=广州大学团委学生社团管理中心
+VersionInfoCompany=广州大学团委学生社团管理中心
+VersionInfoVersion=6.26.3.0
+VersionInfoProductVersion=6.26.3
 DefaultDirName={localappdata}\Programs\{#AppName}
 DefaultGroupName={#AppName}
 DisableDirPage=no
@@ -18,7 +21,7 @@ ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=..\releases\windows
 OutputBaseFilename=Smart Checker-{#AppVersion}-Setup
 SetupIconFile=icons\smart-checker.ico
-UninstallDisplayIcon={app}\Smart Checker.exe
+UninstallDisplayIcon={app}\smart-checker-original.ico
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -27,10 +30,11 @@ Uninstallable=yes
 
 [Files]
 Source: "..\desktopApp\build\compose\binaries\main\app\Smart Checker\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "icons\smart-checker.ico"; DestDir: "{app}"; DestName: "smart-checker-original.ico"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\{#AppName}"; Filename: "{app}\Smart Checker.exe"
-Name: "{autodesktop}\{#AppName}"; Filename: "{app}\Smart Checker.exe"; Tasks: desktopicon
+Name: "{group}\{#AppName}"; Filename: "{app}\Smart Checker.exe"; IconFilename: "{app}\smart-checker-original.ico"
+Name: "{autodesktop}\{#AppName}"; Filename: "{app}\Smart Checker.exe"; IconFilename: "{app}\smart-checker-original.ico"; Tasks: desktopicon
 
 [Tasks]
 Name: desktopicon; Description: "Create a desktop shortcut"

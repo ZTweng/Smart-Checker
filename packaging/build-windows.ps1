@@ -20,7 +20,7 @@ try {
     }
     & $IsccPath (Join-Path $PSScriptRoot "smart-checker.iss")
     if ($LASTEXITCODE -ne 0) { throw "Windows installer build failed." }
-    Write-Host "Installer: $root\releases\windows\Smart Checker-6.26.2-Setup.exe"
+    Write-Host "Installer: $root\releases\windows\Smart Checker-6.26.3-Setup.exe"
 } finally {
     Pop-Location
 }

@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>广州大学团委学生社团管理中心活动跟进表智能检查</title>
+  <style>
+    :root {
+      --bg: #f4f6fb; --wash: #ede9fe; --panel: rgba(255,255,255,.76);
+      --text: #172033; --muted: #65718a; --line: rgba(23,32,51,.1);
+      --primary: #5b45d6; --secondary: #168aad; --ok: #1e9e70; --bad: #e06c47;
+    }
+    @media (prefers-color-scheme: dark) {
+      --bg: #0d1220; --wash: #111a2d; --panel: rgba(21,29,48,.82);
+      --text: #e8ecf7; --muted: #aab5ca; --line: rgba(232,236,247,.12);
+      --primary: #b9a7ff; --secondary: #7dd3fc;
+    }
+    [data-theme="light"] {
+      --bg: #f4f6fb; --wash: #ede9fe; --panel: rgba(255,255,255,.76);
+      --text: #172033; --muted: #65718a; --line: rgba(23,32,51,.1);
+      --primary: #5b45d6; --secondary: #168aad;
+    }
+    [data-theme="dark"] {
+      --bg: #0d1220; --wash: #111a2d; --panel: rgba(21,29,48,.82);
+      --text: #e8ecf7; --muted: #aab5ca; --line: rgba(232,236,247,.12);
+      --primary: #b9a7ff; --secondary: #7dd3fc;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; color: var(--text); font-family: "Segoe UI","Microsoft YaHei",sans-serif;
+      background: linear-gradient(135deg,var(--bg),var(--wash),var(--bg)); }
+    .shell { max-width: 1180px; margin: auto; padding: 28px; }
+    header { display:flex; justify-content:space-between; align-items:center; margin-bottom:22px; }
+    h1 { margin:0; font-size:29px; letter-spacing:-.5px; } h2 { margin:0; font-size:19px; }
+    p { color:var(--muted); font-size:13px; line-height:1.6; }
+    button { border:0; border-radius:14px; padding:11px 16px; font-weight:600; cursor:pointer; color:white; background:var(--primary); }
+    button.secondary { background:var(--secondary); } button.outline { color:var(--text); background:transparent; border:1px solid var(--line); }
+    .layout { display:grid; grid-template-columns:280px 1fr; gap:18px; }
+    .glass { background:var(--panel); border:1px solid var(--line); border-radius:22px; padding:19px;
+      box-shadow:0 16px 42px rgba(45,45,90,.08); backdrop-filter: blur(18px); }
+    .side { min-height:590px; display:flex; flex-direction:column; }
+    .side button { width:100%; margin-top:10px; } .side .links { margin-top:22px; }
+    .scope { margin-top:16px; padding-top:14px; border-top:1px solid var(--line); }
+    .scope-title, .links b { display:block; font-size:14px; font-weight:600; margin-bottom:8px; }
+    .side button { min-height:44px; font-size:14px; }
+    label.check { display:flex; gap:9px; align-items:center; padding:7px 0; font-size:13px; cursor:pointer; }
+    label.check input { width:16px; height:16px; accent-color:var(--primary); }
+    .folder { margin-top:14px; padding:10px 11px; border:1px dashed var(--line); border-radius:12px; color:var(--muted); font-size:11px; line-height:1.5; }
+    .links button { color:var(--text); background:transparent; text-align:center; font-weight:500; padding:10px 12px; border:1px solid var(--line); border-radius:12px; }
+    .brand { display:flex; align-items:center; gap:12px; }
+    .brand img { width:128px; height:128px; object-fit:contain; padding:8px; }
+    h1 { font-size:20px; }
+    .foot { margin-top:auto; color:var(--muted); font-size:11px; line-height:1.6; }
+    .metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:18px; }
+    .metric b { display:block; font-size:30px; margin-top:6px; color:var(--primary); }
+    .metric.ok b { color:var(--ok); } .metric.bad b { color:var(--bad); }
+    .results { min-height:420px; } .result { display:flex; justify-content:space-between; align-items:center; padding:14px;
+      border:1px solid var(--line); border-radius:14px; margin-top:10px; background:rgba(128,128,180,.05); }
+    .result small { display:block; color:var(--bad); margin-top:5px; }
+    .result em { display:block; color:var(--muted); font-size:11px; margin-top:4px; font-style:normal; }
+    .pass { color:var(--ok); font-weight:700; } .fail { color:var(--bad); font-weight:700; }
+    .template { display:inline-flex; margin-top:6px; padding:3px 7px; border-radius:99px; font-size:11px; font-weight:600; }
+    .template.good { color:var(--ok); background:rgba(30,158,112,.12); }
+    .template.warn { color:var(--bad); background:rgba(224,108,71,.12); }
+    .empty { min-height:300px; display:grid; place-items:center; text-align:center; color:var(--muted); }
+    .orb { font-size:50px; color:var(--primary); }
+    @media(max-width:760px) { .shell{padding:16px} .layout{grid-template-columns:1fr} .side{min-height:auto} .metrics{gap:8px} }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div class="brand"><img src="desktopApp/src/main/resources/samc-logo.png" alt="SAMC Logo"><div><h1>广州大学团委学生社团管理中心活动跟进表智能检查</h1><p>SAMC Activity Follow-up Form Smart Checker</p></div></div>
+      <div class="system-theme">
+        <button class="outline" id="theme">切换主题</button>
+        <button class="outline" id="system">跟随系统</button>
+      </div>
+    </header>
+    <section class="layout">
+      <aside class="glass side">
+        <h2>工作区</h2>
+        <p>选择包含 Excel 表格的目录，系统会根据表格标题自动识别常规或非常规活动。</p>
+        <button id="choose">添加表格</button>
+        <div class="folder" id="folder">尚未选择表格目录<br>请选择包含 Excel 文件的文件夹</div>
+        <div class="scope">
+          <div class="scope-title">检查范围</div>
+          <label class="check"><input id="conventional" type="checkbox" checked> 常规活动表</label>
+          <label class="check"><input id="unconventional" type="checkbox" checked> 非常规活动表</label>
+        </div>
+        <button class="secondary" id="run">开始检查</button>
+        <div class="links"><b>模板下载</b><button>下载检查表模板</button></div>
+        <div class="links"><b>快捷入口</b><button>打开批注结果</button><button>查看运行日志</button></div>
+        <div class="foot">本地处理 · 不上传表格<br>v6.26.3<br>广州大学团委学生社团管理中心</div>
+      </aside>
+      <section>
+        <div class="metrics">
+          <div class="glass metric"><span>已检查</span><b id="checked">0</b></div>
+          <div class="glass metric ok"><span>通过</span><b id="passed">0</b></div>
+          <div class="glass metric bad"><span>需复核</span><b id="failed">0</b></div>
+        </div>
+        <div class="glass results">
+          <h2>检查概览</h2><p id="hint">先选择检查范围，再开始检查。系统会先识别表格类型，再执行对应规则。</p>
+          <div id="list" class="empty"><div><div class="orb">⌁</div>还没有检查记录<br><small>选择工作目录后开始检查</small></div></div>
+        </div>
+      </section>
+    </section>
+  </main>
+  <script>
+    const root=document.documentElement, theme=document.getElementById("theme"), system=document.getElementById("system");
+    let manualTheme=null;
+    theme.onclick=()=>{
+      const current=manualTheme || (matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
+      manualTheme=current==="dark"?"light":"dark";
+      root.dataset.theme=manualTheme;
+      theme.textContent=manualTheme==="dark"?"切换浅色":"切换深色";
+    };
+    system.onclick=()=>{ manualTheme=false; root.dataset.theme=""; };
+    const folder=document.getElementById("folder");
+    document.getElementById("choose").onclick=()=>{ folder.innerHTML="已选择表格目录<br>系统将自动识别每个 Excel 的模板类型"; };
+    document.getElementById("run").onclick=()=>{
+      const c=document.getElementById("conventional").checked, u=document.getElementById("unconventional").checked;
+      if(!c && !u){ document.getElementById("hint").textContent="请至少勾选一种表格类型。"; return; }
+      const rows=[];
+      if(c) rows.push('<div class="result"><span>模拟社团活动跟进表.xlsx<em>自动识别：常规活动</em><span class="template good">常规活动</span></span><span class="pass">已检查</span></div>');
+      if(u) rows.push('<div class="result"><span>学生社团活动跟进表.xlsx<em>自动识别：非常规活动</em><span class="template good">非常规活动</span></span><span class="pass">已检查</span></div>');
+      document.getElementById("checked").textContent=rows.length;
+      document.getElementById("passed").textContent=c&&u?"1":(c?"1":"0");
+      document.getElementById("failed").textContent=u?"1":"0";
+      document.getElementById("hint").textContent="类型识别完成，后续将继续执行字段、评分和总分检查。";
+      document.getElementById("list").className="";
+      document.getElementById("list").innerHTML=rows.join("");
+    };
+  </script>
+</body>
+</html>

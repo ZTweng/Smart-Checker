@@ -11,7 +11,7 @@ on:
       - 'packaging/**'
       - 'script/**'
 permissions:
-  contents: read
+  contents: write
 concurrency:
   group: macos-${{ github.ref }}
   cancel-in-progress: true
@@ -20,9 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # macos-13 is the GitHub-hosted Intel runner. There is no
-        # macos-15-intel label on the standard hosted runner pool.
-        runner: [macos-15, macos-13]
+        runner: [macos-15]
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 40
     steps:
@@ -36,6 +34,16 @@ jobs:
         run: bash packaging/build-macos.sh
       - name: Launch app and capture themes
         run: bash script/mac-screenshots.sh
+      - name: Upload DMG to prepared release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          file="releases/macos/Smart Checker-6.26.3-$(uname -m).dmg"
+          shasum -a 256 "$file" > "$file.sha256"
+          gh release view v6.26.3
+          gh release upload v6.26.3 "$file" "$file.sha256" --clobber
       - name: Upload DMG and evidence
         if: always()
         uses: actions/upload-artifact@v4

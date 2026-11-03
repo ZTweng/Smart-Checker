@@ -19,8 +19,8 @@ test -x "$APP/Contents/MacOS/Smart Checker"
 plutil -lint "$APP/Contents/Info.plist"
 ARCH="$(uname -m)"
 mkdir -p releases/macos
-find desktopApp/build/compose/binaries/main/dmg -maxdepth 1 -name '*.dmg' -exec cp {} "releases/macos/Smart Checker-6.26.2-${ARCH}.dmg" \;
-test -f "releases/macos/Smart Checker-6.26.2-${ARCH}.dmg"
-hdiutil verify "releases/macos/Smart Checker-6.26.2-${ARCH}.dmg"
-shasum -a 256 "releases/macos/Smart Checker-6.26.2-${ARCH}.dmg"
+find desktopApp/build/compose/binaries/main/dmg -maxdepth 1 -name '*.dmg' -exec cp {} "releases/macos/Smart Checker-6.26.3-${ARCH}.dmg" \;
+test -f "releases/macos/Smart Checker-6.26.3-${ARCH}.dmg"
+hdiutil verify "releases/macos/Smart Checker-6.26.3-${ARCH}.dmg"
+shasum -a 256 "releases/macos/Smart Checker-6.26.3-${ARCH}.dmg"
 echo "Built for ${ARCH}. This script does not perform Developer ID signing or notarization."

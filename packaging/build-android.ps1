@@ -34,7 +34,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Android build failed." }
     $release = Join-Path $root "releases\android"
     New-Item -ItemType Directory -Path $release -Force | Out-Null
-    $destination = Join-Path $release "Smart Checker-6.26.2.apk"
+    $destination = Join-Path $release "Smart Checker-6.26.3.apk"
     Copy-Item -LiteralPath "androidApp\build\outputs\apk\release\androidApp-release.apk" -Destination $destination -Force
     & "$env:ANDROID_HOME\build-tools\35.0.0\apksigner.bat" verify --verbose --print-certs $destination
     if ($LASTEXITCODE -ne 0) { throw "APK signature verification failed." }

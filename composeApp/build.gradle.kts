@@ -6,7 +6,9 @@ plugins {
 }
 
 kotlin {
-    androidTarget()
+    androidTarget {
+        compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8) }
+    }
     jvm("desktop")
 
     sourceSets {
@@ -27,5 +29,5 @@ kotlin {
 
 android {
     namespace = "org.samc.app"
-    compileSdk = 35
+    compileSdk = 34
 }

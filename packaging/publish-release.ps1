@@ -2,7 +2,7 @@ param([switch]$Publish)
 $ErrorActionPreference = "Stop"
 $root = Split-Path $PSScriptRoot -Parent
 $repo = "ZTweng/Smart-Checker"
-$version = "6.26.2"
+$version = "6.26.3"
 if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
     throw "Install GitHub CLI and run 'gh auth login' first. Never put credentials in this script."
 }

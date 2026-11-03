@@ -18,7 +18,8 @@ compose.desktop {
         mainClass = "org.samc.desktop.MainKt"
         nativeDistributions {
             packageName = "Smart Checker"
-            packageVersion = "6.26.2"
+            packageVersion = "6.26.3"
+            vendor = "广州大学团委学生社团管理中心"
             description = "SAMC活动跟进表智能检查"
             targetFormats(
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Exe,

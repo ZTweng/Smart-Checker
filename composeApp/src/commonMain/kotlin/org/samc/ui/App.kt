@@ -23,7 +23,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.painter.Painter
+import org.samc.core.AppInfo
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -49,19 +50,23 @@ import org.samc.core.ActivityType
 import kotlinx.coroutines.launch
 
 data class AppActions(
-    val onChooseFolder: () -> List<String> = { emptyList() },
+    val onChooseFolder: suspend () -> List<String> = { emptyList() },
     val onStartCheck: suspend (List<String>, Set<ActivityType>, (Int, Int, String) -> Unit) -> CheckReport? = { _, _, _ -> null },
     val onOpenResults: () -> Unit = {},
     val onOpenLog: () -> Unit = {},
     val onClearInputs: () -> Unit = {},
-    val onCheckUpdates: () -> Unit = {}
+    val onCheckUpdates: () -> Unit = {},
+    val onDownloadTemplates: suspend () -> Unit = {}
 )
 
 @Composable
-fun SamcApp(actions: AppActions = AppActions()) {
+fun SamcApp(actions: AppActions = AppActions(), logo: Painter? = null) {
     var report by remember { mutableStateOf<CheckReport?>(null) }
     var selectedInputs by remember { mutableStateOf<List<String>>(emptyList()) }
     var running by remember { mutableStateOf(false) }
+    var choosing by remember { mutableStateOf(false) }
+    var savingTemplates by remember { mutableStateOf(false) }
+    var workspaceExpanded by remember { mutableStateOf(true) }
     var progress by remember { mutableStateOf(0f) }
     var progressLabel by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -104,6 +109,7 @@ fun SamcApp(actions: AppActions = AppActions()) {
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 Header(
+                    logo = logo,
                     isDark = dark,
                     isFollowingSystem = manualDark == null,
                     onToggleTheme = { manualDark = !dark },
@@ -115,16 +121,40 @@ fun SamcApp(actions: AppActions = AppActions()) {
                     modifier = Modifier.fillMaxSize(),
                     horizontalArrangement = Arrangement.spacedBy(18.dp)
                 ) {
+                    CollapsibleWorkspace(
+                        expanded = workspaceExpanded,
+                        onExpand = { workspaceExpanded = true }
+                    ) {
                     Sidebar(
-                        modifier = Modifier.width(250.dp),
+                        modifier = Modifier.width(320.dp),
+                        onCollapse = { workspaceExpanded = false },
                         selectedInputs = selectedInputs,
                         running = running,
+                        choosing = choosing,
+                        savingTemplates = savingTemplates,
                         progress = progress,
                         progressLabel = progressLabel,
                         errorMessage = errorMessage,
                         onChooseFolder = {
-                            selectedInputs = (selectedInputs + actions.onChooseFolder()).distinct()
-                            errorMessage = null
+                            scope.launch {
+                                choosing = true
+                                try {
+                                    selectedInputs = (selectedInputs + actions.onChooseFolder()).distinct()
+                                    errorMessage = null
+                                } catch (e: Exception) {
+                                    errorMessage = e.message ?: "添加表格失败"
+                                } finally { choosing = false }
+                            }
+                        },
+                        onDownloadTemplates = {
+                            scope.launch {
+                                savingTemplates = true
+                                try {
+                                    actions.onDownloadTemplates()
+                                } catch (e: Exception) {
+                                    errorMessage = e.message ?: "保存模板失败"
+                                } finally { savingTemplates = false }
+                            }
                         },
                         onClearInputs = {
                             actions.onClearInputs()
@@ -171,6 +201,7 @@ fun SamcApp(actions: AppActions = AppActions()) {
                         onOpenResults = actions.onOpenResults,
                         onOpenLog = actions.onOpenLog
                     )
+                    }
                     Dashboard(
                         modifier = Modifier.weight(1f),
                         report = report,
@@ -190,6 +221,7 @@ fun SamcApp(actions: AppActions = AppActions()) {
 
 @Composable
 private fun Header(
+    logo: Painter?,
     isDark: Boolean,
     isFollowingSystem: Boolean,
     onToggleTheme: () -> Unit,
@@ -201,10 +233,15 @@ private fun Header(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        Column {
+        Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+        logo?.let {
+            BrandLogo(it)
+            Spacer(Modifier.width(12.dp))
+        }
+        Column(Modifier.weight(1f)) {
             Text(
                 "广州大学团委学生社团管理中心活动跟进表智能检查",
-                fontSize = 23.sp,
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -213,6 +250,7 @@ private fun Header(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = .62f),
                 fontSize = 13.sp
             )
+        }
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             TextButton(onClick = onCheckUpdates) { Text("检查更新") }
@@ -229,12 +267,16 @@ private fun Header(
 @Composable
 private fun Sidebar(
     modifier: Modifier,
+    onCollapse: () -> Unit,
     selectedInputs: List<String>,
     running: Boolean,
+    choosing: Boolean,
+    savingTemplates: Boolean,
     progress: Float,
     progressLabel: String,
     errorMessage: String?,
     onChooseFolder: () -> Unit,
+    onDownloadTemplates: () -> Unit,
     onClearInputs: () -> Unit,
     conventionalEnabled: Boolean,
     unconventionalEnabled: Boolean,
@@ -246,13 +288,26 @@ private fun Sidebar(
 ) {
     GlassCard(modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        Text("工作区", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("工作区", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold, fontSize = 18.sp)
+            WorkspaceToggle(true, onCollapse)
+        }
         Spacer(Modifier.height(12.dp))
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = .035f),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = .08f))
+        ) {
+        Column(Modifier.padding(14.dp)) {
+        WorkspaceTitle("表格文件")
+        Spacer(Modifier.height(10.dp))
         Text(
             "选择单个 Excel 文件或文件夹，系统会根据表格标题自动识别常规或非常规活动。",
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = .62f),
-            fontSize = 12.sp,
-            lineHeight = 18.sp
+            fontSize = 13.sp,
+            lineHeight = 20.sp
         )
         Box(Modifier.fillMaxWidth().height(116.dp)) {
         Column {
@@ -268,7 +323,7 @@ private fun Sidebar(
                 )
                 TextButton(
                     onClick = onClearInputs,
-                    enabled = !running,
+                    enabled = !running && !choosing,
                     contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)
                 ) {
                     Text("清除", fontSize = 11.sp)
@@ -300,25 +355,30 @@ private fun Sidebar(
                 modifier = Modifier.padding(top = 6.dp)
             )
         }
-        Spacer(Modifier.height(14.dp))
-        Text("检查范围", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-        CheckRow("常规活动表", conventionalEnabled, onConventionalChanged)
-        CheckRow("非常规活动表", unconventionalEnabled, onUnconventionalChanged)
         Spacer(Modifier.height(18.dp))
+        WorkspaceTitle("检查范围")
+        Spacer(Modifier.height(10.dp))
+        CheckRow("常规活动表", conventionalEnabled, onConventionalChanged, !running)
+        CheckRow("非常规活动表", unconventionalEnabled, onUnconventionalChanged, !running)
+        Spacer(Modifier.height(18.dp))
+        WorkspaceTitle("检查操作")
+        Spacer(Modifier.height(10.dp))
         Button(
             onClick = onChooseFolder,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 46.dp),
+            enabled = !running && !choosing && !savingTemplates,
             shape = RoundedCornerShape(14.dp)
-        ) { Text("选择表格或文件夹") }
+        ) { Text(if (choosing) "正在添加…" else "添加表格", fontSize = 14.sp) }
         Spacer(Modifier.height(9.dp))
         Button(
             onClick = onStartCheck,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 46.dp),
+            enabled = !running && !choosing && !savingTemplates && selectedInputs.isNotEmpty(),
             shape = RoundedCornerShape(14.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = MaterialTheme.colorScheme.secondary
             )
-        ) { Text(if (running) "检查中…" else "开始检查") }
+        ) { Text(if (running) "检查中…" else "开始检查", fontSize = 14.sp) }
         if (running || progressLabel.isNotBlank()) {
             Spacer(Modifier.height(10.dp))
             androidx.compose.material3.LinearProgressIndicator(
@@ -327,13 +387,25 @@ private fun Sidebar(
             )
             Text(progressLabel, fontSize = 10.sp, maxLines = 2)
         }
+        }
+        }
         Spacer(Modifier.height(20.dp))
-        Text("快捷入口", color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold, fontSize = 13.sp)
-        TextButton(onClick = onOpenResults) { Text("打开批注结果") }
-        TextButton(onClick = onOpenLog) { Text("查看运行日志") }
+        WorkspaceSection("模板下载") {
+        WorkspaceButton(
+            if (savingTemplates) "正在保存…" else "下载检查表模板",
+            onDownloadTemplates,
+            !running && !choosing && !savingTemplates
+        )
+        }
+        Spacer(Modifier.height(20.dp))
+        WorkspaceSection("快捷入口") {
+        WorkspaceButton("打开批注结果", onOpenResults, !running)
+        Spacer(Modifier.height(8.dp))
+        WorkspaceButton("查看运行日志", onOpenLog, !running)
+        }
         Spacer(Modifier.height(16.dp))
         Text(
-            "本地处理 · 不上传表格\n版本 v6.26.2",
+            "本地处理 · 不上传表格\n版本 v${AppInfo.VERSION}\n${AppInfo.COMPANY}",
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = .5f),
             fontSize = 11.sp
         )
@@ -342,12 +414,43 @@ private fun Sidebar(
 }
 
 @Composable
-private fun CheckRow(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+private fun WorkspaceSection(title: String, content: @Composable () -> Unit) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = .035f),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = .08f))
+    ) {
+        Column(Modifier.padding(14.dp)) {
+            WorkspaceTitle(title)
+            Spacer(Modifier.height(10.dp))
+            content()
+        }
+    }
+}
+
+@Composable
+private fun WorkspaceTitle(title: String) {
+    Text(title, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+}
+
+@Composable
+private fun WorkspaceButton(label: String, onClick: () -> Unit, enabled: Boolean) {
+    OutlinedButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp),
+        shape = RoundedCornerShape(12.dp)
+    ) { Text(label, fontSize = 14.sp) }
+}
+
+@Composable
+private fun CheckRow(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit, enabled: Boolean) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        androidx.compose.material3.Checkbox(checked = checked, onCheckedChange = onCheckedChange)
+        androidx.compose.material3.Checkbox(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled)
         Text(label, color = MaterialTheme.colorScheme.onSurface, fontSize = 13.sp)
     }
 }
@@ -470,8 +573,13 @@ private fun ActivityPill(text: String, isDark: Boolean) {
     Surface(
         modifier = Modifier.height(22.dp),
         shape = RoundedCornerShape(50),
-        color = if (isDark) Color(0xFF303A57) else Color(0xFFE8EAF6),
-        tonalElevation = 0.dp
+        color = if (isDark) Color(0xFF303A57) else Color(0xFFE2DDFB),
+        tonalElevation = 0.dp,
+        border = BorderStroke(
+            1.dp,
+            if (isDark) MaterialTheme.colorScheme.onSurface.copy(alpha = .12f)
+            else Color(0xFFC5BBEE)
+        )
     ) {
         Box(
             modifier = Modifier.padding(horizontal = 9.dp),
@@ -479,7 +587,7 @@ private fun ActivityPill(text: String, isDark: Boolean) {
         ) {
             Text(
                 text,
-                color = if (isDark) Color(0xFFC9B8FF) else Color(0xFF5146A8),
+                color = if (isDark) Color(0xFFD6CCFF) else Color(0xFF3A2D8F),
                 fontSize = 11.sp,
                 lineHeight = 14.sp,
                 maxLines = 1,

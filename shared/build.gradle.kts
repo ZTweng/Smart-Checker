@@ -26,5 +26,5 @@ kotlin {
 
 android {
     namespace = "org.samc.core"
-    compileSdk = 35
+    compileSdk = 34
 }

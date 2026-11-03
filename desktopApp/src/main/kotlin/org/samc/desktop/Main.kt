@@ -1,7 +1,8 @@
 package org.samc.desktop
 
 import java.awt.Desktop
-import java.awt.Frame
+import java.awt.Taskbar
+import javax.imageio.ImageIO
 import javax.swing.JFileChooser
 import javax.swing.filechooser.FileNameExtensionFilter
 import java.io.File
@@ -10,32 +11,54 @@ import java.time.format.DateTimeFormatter
 import javax.swing.SwingUtilities
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import javax.swing.JList
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.loadImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.platform.LocalDensity
 import org.samc.ui.SamcApp
 import org.samc.ui.AppActions
+import org.samc.ui.UpdateDialog
+import org.samc.core.AppInfo
+import kotlinx.coroutines.swing.Swing
+import java.util.prefs.Preferences
 import org.samc.core.AppUpdates
 import androidx.compose.runtime.*
 import kotlinx.coroutines.launch
 import androidx.compose.material3.*
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Modifier
 
 fun main() = application {
     val updateScope = rememberCoroutineScope()
     var checkingUpdates by remember { mutableStateOf(false) }
     var updateMessage by remember { mutableStateOf<String?>(null) }
     var updatePage by remember { mutableStateOf<String?>(null) }
+    val preferences = remember { Preferences.userRoot().node("org/samc/checkform") }
+    var requiredUpdate by remember {
+        mutableStateOf(AppUpdates.cachedRequirement(preferences.get("requiredVersion", null)))
+    }
+    var downloadError by remember { mutableStateOf<String?>(null) }
     fun checkUpdates(manual: Boolean) {
         if (checkingUpdates) return
         checkingUpdates = true
         updateScope.launch {
             try {
                 val release = withContext(Dispatchers.IO) { AppUpdates.latest() }
+                requiredUpdate = AppUpdates.requiredRelease(requiredUpdate, release)
+                requiredUpdate?.let { required ->
+                    withContext(Dispatchers.IO) {
+                        preferences.put("requiredVersion", required.version)
+                        preferences.flush()
+                    }
+                }
                 updatePage = release?.page
-                if (release != null) updateMessage = "发现新版本 ${release.version}\n\n${release.notes}\n\n打开官方发布页下载并覆盖安装。"
+                if (release != null) updateMessage = null
                 else if (manual) updateMessage = "当前版本 ${AppUpdates.VERSION}，暂无可用更新。"
             } catch (e: Exception) {
                 if (manual) {
@@ -46,35 +69,66 @@ fun main() = application {
         }
     }
     LaunchedEffect(Unit) { checkUpdates(false) }
-    var lastCheckedInputs: List<File> = emptyList()
-    var lastSingleAnnotatedFile: File? = null
+    var lastCheckedInputs by remember { mutableStateOf<List<File>>(emptyList()) }
+    var lastSingleAnnotatedFile by remember { mutableStateOf<File?>(null) }
     Window(
         onCloseRequest = ::exitApplication,
         title = "Smart Checker",
         icon = painterResource("smart-checker.png"),
-        state = rememberWindowState(width = 1180.dp, height = 760.dp)
+        state = rememberWindowState(
+            placement = WindowPlacement.Maximized,
+            width = 1180.dp,
+            height = 760.dp
+        )
     ) {
-        updateMessage?.let { message ->
-            MaterialTheme {
-                AlertDialog(
-                    onDismissRequest = { updateMessage = null },
-                    title = { Text("软件更新") },
-                    text = { Text(message) },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            updatePage?.let { Desktop.getDesktop().browse(java.net.URI(it)) }
-                            updateMessage = null
-                        }) { Text(if (updatePage == null) "确定" else "前往下载") }
-                    },
-                    dismissButton = { TextButton(onClick = { updateMessage = null }) { Text("关闭") } }
-                )
+        LaunchedEffect(window) {
+            val icon = checkNotNull(Thread.currentThread().contextClassLoader
+                .getResourceAsStream("smart-checker.png")).use { ImageIO.read(it) }
+            window.iconImages = listOf(icon)
+            if (Taskbar.isTaskbarSupported()) {
+                val taskbar = Taskbar.getTaskbar()
+                if (taskbar.isSupported(Taskbar.Feature.ICON_IMAGE)) {
+                    taskbar.iconImage = icon
+                }
             }
         }
-        SamcApp(
+        val required = requiredUpdate
+        val logoPixels = with(LocalDensity.current) { 112.dp.roundToPx() }
+        val internalLogo = remember(logoPixels) {
+            val sizes = listOf(112, 140, 168, 196, 224, 280, 336, 448)
+            val pixels = sizes.firstOrNull { it >= logoPixels } ?: sizes.last()
+            val bitmap = checkNotNull(Thread.currentThread().contextClassLoader
+                .getResourceAsStream("samc-logo-$pixels.png")).use(::loadImageBitmap)
+            BitmapPainter(bitmap, filterQuality = FilterQuality.High)
+        }
+        if (required == null) SamcApp(
+            logo = internalLogo,
             actions = AppActions(
                 onCheckUpdates = { checkUpdates(true) },
                 onChooseFolder = {
-                    chooseInputs().map(File::getAbsolutePath)
+                    withContext(Dispatchers.Swing) { chooseInputs(window).map(File::getAbsolutePath) }
+                },
+                onDownloadTemplates = {
+                    val destination = withContext(Dispatchers.Swing) {
+                        JFileChooser().apply {
+                            dialogTitle = "选择模板保存文件夹"
+                            fileSelectionMode = JFileChooser.DIRECTORIES_ONLY
+                        }.let { chooser ->
+                            if (chooser.showSaveDialog(window) == JFileChooser.APPROVE_OPTION) chooser.selectedFile else null
+                        }
+                    }
+                    destination?.let { folder ->
+                        withContext(Dispatchers.IO) {
+                            val target = File(folder, "Smart Checker-模板-${AppInfo.VERSION}")
+                            target.mkdirs()
+                            AppInfo.TEMPLATE_NAMES.forEach { name ->
+                                checkNotNull(Thread.currentThread().contextClassLoader.getResourceAsStream("templates/$name")) {
+                                    "安装包缺少模板：$name"
+                                }.use { input -> File(target, name).outputStream().use { input.copyTo(it) } }
+                            }
+                            Desktop.getDesktop().open(target)
+                        }
+                    }
                 },
                 onStartCheck = { inputPaths, types, onProgress ->
                     inputPaths.map(::File).takeIf { it.isNotEmpty() }?.let {
@@ -89,7 +143,7 @@ fun main() = application {
                             lastSingleAnnotatedFile = report.results.singleOrNull()
                                 ?.takeIf { result -> !result.passed }
                                 ?.annotatedFilePath?.let(::File)
-                            writeRunLog(it.first(), report)
+                            withContext(Dispatchers.IO) { writeRunLog(it.first(), report) }
                         }
                     }
                 },
@@ -110,10 +164,37 @@ fun main() = application {
                 }
             )
         )
+        else Surface(modifier = Modifier.fillMaxSize()) {}
+        val message = required?.let {
+            "发现新版本 ${it.version}（当前 ${AppUpdates.VERSION}）。\n\n${it.notes}\n\n请下载并覆盖安装新版后重新启动。未完成更新无法使用软件。"
+        } ?: updateMessage
+        message?.let {
+            MaterialTheme {
+                UpdateDialog(
+                    message = it + (downloadError?.let { error -> "\n\n$error" } ?: ""),
+                    required = required != null,
+                    hasDownload = required != null || updatePage != null,
+                    onDownload = {
+                        updateScope.launch {
+                            try {
+                                withContext(Dispatchers.IO) {
+                                    Desktop.getDesktop().browse(java.net.URI(required?.page ?: updatePage!!))
+                                }
+                                downloadError = null
+                            } catch (e: Exception) {
+                                downloadError = "无法打开浏览器，请重试：${e.message}"
+                            }
+                        }
+                    },
+                    onDismiss = { updateMessage = null; downloadError = null },
+                    onExit = ::exitApplication
+                )
+            }
+        }
     }
 }
 
-private fun chooseInputs(): List<File> {
+private fun chooseInputs(owner: java.awt.Window): List<File> {
     val chooser = JFileChooser().apply {
         dialogTitle = "选择 Excel 表格或文件夹"
         fileSelectionMode = JFileChooser.FILES_AND_DIRECTORIES
@@ -122,7 +203,7 @@ private fun chooseInputs(): List<File> {
         addChoosableFileFilter(FileNameExtensionFilter("Excel 工作簿 (*.xlsx)", "xlsx"))
         setMultiSelectionEnabled(true)
     }
-    return if (chooser.showOpenDialog(null as Frame?) == JFileChooser.APPROVE_OPTION) {
+    return if (chooser.showOpenDialog(owner) == JFileChooser.APPROVE_OPTION) {
         val files = chooser.selectedFiles.toList().ifEmpty { listOfNotNull(chooser.selectedFile) }
         files.filter { it.isDirectory || it.extension.equals("xlsx", true) }
     } else emptyList()

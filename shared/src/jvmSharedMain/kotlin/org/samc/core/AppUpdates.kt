@@ -5,9 +5,17 @@ import java.net.URL
 import kotlinx.serialization.json.*
 
 object AppUpdates {
-    const val VERSION = "6.26.2"
+    const val VERSION = AppInfo.VERSION
     const val RELEASES = "https://github.com/ZTweng/Smart-Checker/releases"
     data class Release(val version: String, val notes: String, val page: String)
+
+    fun cachedRequirement(version: String?): Release? =
+        version?.takeIf { isNewer(it) }?.let { Release(it, "", RELEASES) }
+
+    // Errors or stale responses must not unlock an install with a confirmed newer release.
+    fun requiredRelease(current: Release?, incoming: Release?): Release? =
+        incoming?.takeIf { isNewer(it.version) && (current == null || isNewer(it.version, current.version)) }
+            ?: current?.takeIf { isNewer(it.version) }
 
     fun isNewer(candidate: String, installed: String = VERSION): Boolean {
         fun parts(value: String): List<Int>? {
