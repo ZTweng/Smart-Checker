@@ -22,6 +22,16 @@
 3. Android SDK 35（只构建 APK 时需要）
 4. macOS + Xcode Command Line Tools（构建 macOS 安装包时需要）
 
+## 构建命令
+
+在本目录执行：
+
+```powershell
+.\gradlew :desktopApp:createDistributable
+.\gradlew :desktopApp:packageExe
+.\gradlew :desktopApp:packageDmg
+.\gradlew :androidApp:assembleRelease
+```
 
 Windows 安装包会带有卸载入口；Android 使用系统应用卸载；macOS 使用 `.app` 删除或 `.pkg` 的系统安装方式。
 

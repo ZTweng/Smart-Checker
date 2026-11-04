@@ -3,8 +3,14 @@ package org.samc.core
 import kotlin.test.*
 
 class AppUpdatesTest {
+    @Test fun directsFreshAndCachedUpdatesToDownloadWebsite() {
+        val expected = "https://ztweng.github.io/Smart-Checker/"
+        assertEquals(expected, AppUpdates.DOWNLOAD_PAGE)
+        assertEquals(expected, AppUpdates.Release("6.26.5", "更新简介").page)
+        assertEquals(expected, AppUpdates.cachedRequirement("6.26.5")?.page)
+    }
     @Test fun keepsMandatoryUpdateAfterFailureOrStaleResponse() {
-        val required = AppUpdates.Release("6.26.4", "", AppUpdates.RELEASES)
+        val required = AppUpdates.Release("6.26.5", "", AppUpdates.RELEASES)
         assertEquals(required, AppUpdates.requiredRelease(required, null))
         assertEquals(required, AppUpdates.requiredRelease(required, required.copy(version = "6.26.3")))
         assertEquals("7.0.0", AppUpdates.requiredRelease(required, required.copy(version = "7.0.0"))?.version)
@@ -13,7 +19,7 @@ class AppUpdatesTest {
     }
 
     @Test fun restoresOnlyNewerCachedRequirements() {
-        assertNotNull(AppUpdates.cachedRequirement("6.26.4"))
+        assertNotNull(AppUpdates.cachedRequirement("6.26.5"))
         assertNull(AppUpdates.cachedRequirement(AppUpdates.VERSION))
         assertNull(AppUpdates.cachedRequirement("6.26.2"))
         assertNull(AppUpdates.cachedRequirement("invalid"))

@@ -40,23 +40,21 @@ def request(path, data=None, method=None, raw=False):
 
 
 def release():
-    try:
-        return request("/releases/tags/v6.26.3")
-    except urllib.error.HTTPError as error:
-        if error.code != 404:
-            raise
+    matches = [r for r in request("/releases?per_page=100") if r["tag_name"] == "v6.26.4"]
+    if matches:
+        return max(matches, key=lambda r: len(r["assets"]))
     notes = (ROOT / "packaging/release-notes.md").read_text(encoding="utf-8")
-    notes += "\n\nAndroid: signing key changed; back up data before uninstalling the old version. macOS: unsigned and not notarized.\n"
-    return request("/releases", {"tag_name": "v6.26.3", "target_commitish": "main",
-                               "name": "Smart Checker 6.26.3", "body": notes, "draft": True})
+    return request("/releases", {"tag_name": "v6.26.4", "target_commitish": "main",
+                               "name": "Smart Checker 6.26.4", "body": notes, "draft": True})
 
 
 def upload(rel, file):
     existing = request(f"/releases/{rel['id']}/assets")
-    if any(asset["name"] == file.name and asset["size"] == file.stat().st_size for asset in existing):
+    name = file.name.replace(" ", ".")
+    if any(asset["name"] == name and asset["size"] == file.stat().st_size for asset in existing):
         print("Already uploaded:", file.name, flush=True)
         return
-    if any(asset["name"] == file.name for asset in existing):
+    if any(asset["name"] == name for asset in existing):
         raise RuntimeError("Conflicting existing release asset: " + file.name)
     url = rel["upload_url"].split("{")[0] + "?name=" + urllib.parse.quote(file.name)
     result = request(url, file.read_bytes(), raw=True)
@@ -92,12 +90,12 @@ def sync():
         return
     tree = request("/git/trees", {"base_tree": old_commit["tree"]["sha"], "tree": updates})
     commit = request("/git/commits", {
-        "message": "Publish local 6.26.3 sources, resources and release configuration",
+        "message": "Release 6.26.4 with download website update links",
         "tree": tree["sha"], "parents": [parent],
     })
     rel = release()
-    for relative in ["releases/windows/Smart Checker-6.26.3-Setup.exe",
-                     "releases/android/Smart Checker-6.26.3.apk"]:
+    for relative in ["releases/windows/Smart Checker-6.26.4-Setup.exe",
+                     "releases/android/Smart Checker-6.26.4.apk"]:
         upload(rel, ROOT / relative)
     request("/git/refs/heads/main", {"sha": commit["sha"], "force": False}, method="PATCH")
     print("Updated main:", commit["sha"], flush=True)
@@ -124,8 +122,8 @@ if __name__ == "__main__":
     elif command == "publish":
         runs, rel = status()
         assets = request(f"/releases/{rel['id']}/assets")
-        required = {"Smart Checker-6.26.3-Setup.exe", "Smart Checker-6.26.3.apk",
-                    "Smart Checker-6.26.3-arm64.dmg"}
+        required = {"Smart.Checker-6.26.4-Setup.exe", "Smart.Checker-6.26.4.apk",
+                    "Smart.Checker-6.26.4-arm64.dmg"}
         if not required.issubset({asset["name"] for asset in assets}):
             raise RuntimeError("Missing release assets; keep draft unpublished")
         request(f"/releases/{rel['id']}", {"draft": False, "make_latest": "true"}, method="PATCH")

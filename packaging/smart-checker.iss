@@ -1,5 +1,5 @@
 #define AppName "Smart Checker"
-#define AppVersion "6.26.3"
+#define AppVersion "6.26.4"
 
 [Setup]
 AppId={{FE019F7E-FAF8-4BB6-96A7-40F9939CCF37}
@@ -7,8 +7,8 @@ AppName={#AppName}
 AppVersion={#AppVersion}
 AppPublisher=广州大学团委学生社团管理中心
 VersionInfoCompany=广州大学团委学生社团管理中心
-VersionInfoVersion=6.26.3.0
-VersionInfoProductVersion=6.26.3
+VersionInfoVersion=6.26.4.0
+VersionInfoProductVersion=6.26.4
 DefaultDirName={localappdata}\Programs\{#AppName}
 DefaultGroupName={#AppName}
 DisableDirPage=no

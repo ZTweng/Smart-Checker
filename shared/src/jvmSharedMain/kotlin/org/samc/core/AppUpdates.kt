@@ -7,10 +7,11 @@ import kotlinx.serialization.json.*
 object AppUpdates {
     const val VERSION = AppInfo.VERSION
     const val RELEASES = "https://github.com/ZTweng/Smart-Checker/releases"
-    data class Release(val version: String, val notes: String, val page: String)
+    const val DOWNLOAD_PAGE = "https://ztweng.github.io/Smart-Checker/"
+    data class Release(val version: String, val notes: String, val page: String = DOWNLOAD_PAGE)
 
     fun cachedRequirement(version: String?): Release? =
-        version?.takeIf { isNewer(it) }?.let { Release(it, "", RELEASES) }
+        version?.takeIf { isNewer(it) }?.let { Release(it, "") }
 
     // Errors or stale responses must not unlock an install with a confirmed newer release.
     fun requiredRelease(current: Release?, incoming: Release?): Release? =
@@ -59,7 +60,7 @@ object AppUpdates {
             if (!isNewer(tag)) return null
             val page = json.getValue("html_url").jsonPrimitive.content
             require(page.startsWith("$RELEASES/tag/")) { "更新地址不属于官方发布仓库" }
-            return Release(tag.removePrefix("v"), json["body"]?.jsonPrimitive?.contentOrNull.orEmpty().take(4000), page)
+            return Release(tag.removePrefix("v"), json["body"]?.jsonPrimitive?.contentOrNull.orEmpty().take(4000))
         } finally {
             connection.disconnect()
         }

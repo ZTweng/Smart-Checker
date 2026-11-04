@@ -40,10 +40,10 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          file="releases/macos/Smart Checker-6.26.3-$(uname -m).dmg"
+          file="releases/macos/Smart Checker-6.26.4-$(uname -m).dmg"
           shasum -a 256 "$file" > "$file.sha256"
-          gh release view v6.26.3
-          gh release upload v6.26.3 "$file" "$file.sha256" --clobber
+          gh release view v6.26.4
+          gh release upload v6.26.4 "$file" "$file.sha256" --clobber
       - name: Upload DMG and evidence
         if: always()
         uses: actions/upload-artifact@v4

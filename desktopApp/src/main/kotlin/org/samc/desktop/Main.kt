@@ -62,8 +62,8 @@ fun main() = application {
                 else if (manual) updateMessage = "当前版本 ${AppUpdates.VERSION}，暂无可用更新。"
             } catch (e: Exception) {
                 if (manual) {
-                    updatePage = AppUpdates.RELEASES
-                    updateMessage = "${e.message ?: "检查更新失败"}\n可直接打开官方发布页查看最新安装包。"
+                    updatePage = AppUpdates.DOWNLOAD_PAGE
+                    updateMessage = "${e.message ?: "检查更新失败"}\n可直接打开软件下载页查看最新安装包。"
                 }
             } finally { checkingUpdates = false }
         }
@@ -178,7 +178,7 @@ fun main() = application {
                         updateScope.launch {
                             try {
                                 withContext(Dispatchers.IO) {
-                                    Desktop.getDesktop().browse(java.net.URI(required?.page ?: updatePage!!))
+                                    Desktop.getDesktop().browse(java.net.URI(AppUpdates.DOWNLOAD_PAGE))
                                 }
                                 downloadError = null
                             } catch (e: Exception) {

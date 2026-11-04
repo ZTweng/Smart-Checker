@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
 $root = Split-Path $PSScriptRoot -Parent
-$installer = Join-Path $root "releases\windows\Smart Checker-6.26.3-Setup.exe"
+$installer = Join-Path $root "releases\windows\Smart Checker-6.26.4-Setup.exe"
 $testRoot = [IO.Path]::GetFullPath((Join-Path $root "build-tools\installer-smoke"))
 $expected = Join-Path $testRoot "Smart Checker"
 

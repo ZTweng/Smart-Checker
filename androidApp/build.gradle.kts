@@ -17,8 +17,8 @@ android {
         applicationId = "org.samc.checkform"
         minSdk = 26
         targetSdk = 34
-        versionCode = 62603
-        versionName = "6.26.3"
+        versionCode = 62604
+        versionName = "6.26.4"
     }
 
     signingConfigs {
